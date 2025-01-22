@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import PostList from './PostList';
+import _ from 'lodash' 
 import './App.css';
 
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 4;
+  const postsPerPage = 10;
 
   useEffect(() => {
     fetch('https://jsonplaceholder.typicode.com/posts')
@@ -13,21 +14,17 @@ const App = () => {
       .then(data => setPosts(data));
   }, []);
 
-  const totalPages = useMemo(() => Math.ceil(posts.length / postsPerPage), [posts.length]);
+  const chunkedData = useMemo(() => _.chunk(posts, postsPerPage), [posts]);
+  const currentItems  = chunkedData[currentPage-1] || [];
+  const totalPages = chunkedData.length
 
-  const handlePageChange = useCallback((page) => {
+  const handlePageChange = (page)=>{
     setCurrentPage(page);
-  }, []);
-
-  const currentPosts = useMemo(() => {
-    const startIndex = (currentPage - 1) * postsPerPage;
-    return posts.slice(startIndex, startIndex + postsPerPage);
-  }, [posts, currentPage, postsPerPage]);
-
+  } 
   return (
     <div>
       <h1>Danh sách bài viết</h1>
-      <PostList posts={currentPosts} />
+      <PostList posts={currentItems} />
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
@@ -35,7 +32,7 @@ const App = () => {
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
+  
   return (
     <div>
       {pages.map(page => (
